@@ -1,0 +1,117 @@
+﻿<div style="margin-top: 10px;"></div>
+
+<form @onsubmit="() => OnClickEvent.Invoke(Search.Trim(), Status.Trim(), 1, StartDate, EndDate)">
+    <div class="form-row">
+        <div class="col">
+            <input type="text" class="form-control" placeholder="Buscar" id="searchField" @bind="Search" @bind:event="oninput" />
+        </div>
+            
+        <div class="col">
+            <select class="form-control" id="searchField" @bind="Status">
+                @SelectOptions
+            </select>
+        </div>
+            
+        <div class="col">
+            <button type="submit" class="btn btn-success">Buscar</button>
+        </div>
+    </div>
+</form>
+<hr />
+
+
+@if (Response.AllRegisters > 0)
+{
+    Pagination();
+    <table class="table table-responsive table-striped table-hover">
+        <thead style="background-color: #17a2b8; color: white; font-weight: bold;">
+            <tr>
+                @TableHeader
+            </tr>
+        </thead>
+        <tbody>
+            @TableBody
+        </tbody>
+    </table>
+
+    <div id="pagination" class="col-md-12">
+        <ul class="pagination">
+            <li class="page-item"><button class="page-link" @onclick="()=>OnClickEvent.Invoke(Search.Trim(), Status.Trim(), 1, StartDate, EndDate)">Inicio</button></li>
+            @foreach (int x in NumbersPages)
+            {
+                if (x == actualPage)
+                {
+                    <li class="page-item active"><button class="page-link" @onclick="()=>OnClickEvent.Invoke(Search.Trim(), Status.Trim(), x, StartDate, EndDate)">@x</button></li>
+                }
+                else
+                {
+                    <li class="page-item"><button class="page-link" @onclick="()=>OnClickEvent.Invoke(Search.Trim(), Status.Trim(), x, StartDate, EndDate)">@x</button></li>
+                }
+            }
+            <li class="page-item"><button class="page-link" @onclick="()=>OnClickEvent.Invoke(Search.Trim(), Status.Trim(), allPages, StartDate, EndDate)">Final</button></li>
+        </ul>
+    </div>
+}
+else
+{
+    <h4 class="alert alert-info">Sin Elementos que mostrar</h4>
+}
+
+
+
+@code {
+
+    [Parameter] public ResponseForList Response { get; set; }
+    [Parameter] public Action<string, string, int, DateTime, DateTime> OnClickEvent { get; set; }
+    [Parameter] public RenderFragment TableHeader { get; set; }
+    [Parameter] public RenderFragment TableBody { get; set; }
+    [Parameter] public RenderFragment SelectOptions { get; set; }
+
+    private string Search { get; set; } = "";
+    private string Status { get; set; } = "";
+    private DateTime StartDate { get; set; } = DateTime.UtcNow;
+    private DateTime EndDate { get; set; } = DateTime.UtcNow;
+
+    private int allRegisters;
+    private int actualPage;
+    private int[] NumbersPages;
+    private int allPages;
+
+    private void Pagination()
+    {
+        allRegisters = Response.AllRegisters;
+        actualPage = Response.ActualPage;
+        int start = 1;
+
+        if (allRegisters % Utilities.REGISTERSPERPAGE > 0)
+            allPages = (allRegisters / Utilities.REGISTERSPERPAGE) + 1;
+        else
+            allPages = (allRegisters / Utilities.REGISTERSPERPAGE);
+        int maxQuantityPagesToShow = Utilities.RADIO * 2 + 1;
+        int end = maxQuantityPagesToShow;
+        if (allPages <= maxQuantityPagesToShow)
+        {
+            end = allPages;
+        }
+        if (actualPage > Utilities.RADIO + 1)
+        {
+            start = actualPage - Utilities.RADIO;
+            if (allPages > actualPage + Utilities.RADIO)
+            {
+                end = actualPage + Utilities.RADIO;
+            }
+            else
+            {
+                end = allPages;
+            }
+        }
+        NumbersPages = new int[allPages];
+        int indice = 0;
+        @for (int i = start; i <= end; i++)
+        {
+            NumbersPages[indice] = i;
+            indice++;
+        }
+    }
+
+}

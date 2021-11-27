@@ -1,0 +1,64 @@
+﻿<EditForm Context="myContext" Model="@employee" OnValidSubmit="@EventCallback">
+    <div style="overflow-y: auto; max-height: 650px;">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+        <div class="row" style="margin-left:0; margin-right:0;">
+            <div class="col-md-6">
+                <div class="form-group mb-3">
+                    <label>Nombres:</label>
+                    <InputText required class="form-control" @bind-Value="employee.Names" />
+                </div>
+
+                <div class="form-group mb-3">
+                    <label>Apellidos:</label>
+                    <InputText required class="form-control" @bind-Value="employee.LastNames" />
+                </div>
+
+                <div class="form-group mb-3">
+                    <label>DNI:</label>
+                    <InputText required class="form-control" @bind-Value="employee.DNI" />
+                </div>
+
+                <div class="form-group mb-3">
+                    <label>Télefono:</label>
+                    <InputText required class="form-control" @bind-Value="employee.Phone" />
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="form-group mb-3">
+                    <label>Email:</label>
+                    <InputText class="form-control" @bind-Value="employee.Email" />
+                </div>
+
+                <div class="form-group mb-3">
+                    <label>Posición:</label>
+                    <InputSelect required class="form-control" @bind-Value="employee.Rol">
+                        <option value="">Rol...</option>
+                        <option value="ADMINISTRADOR">ADMINISTRADOR</option>
+                    </InputSelect>
+                </div>
+
+                <div class="form-group mb-3">
+                    <label>Estado:</label>
+                    <InputSelect required class="form-control" @bind-Value="employee.Status">
+                        <option value="ACTIVO">ACTIVO</option>
+                        <option value="SUSPENDIDO">SUSPENDIDO</option>
+                    </InputSelect>
+                </div>
+
+            </div>
+            <a class="btn btn-info" href="Usuarios">
+                <span class="oi oi-arrow-left" aria-hidden="true"></span> Volver
+            </a> |
+            <button class="btn btn-primary" type="submit">
+                <span class="oi oi-check" aria-hidden="true"></span> Guardar
+            </button>
+        </div>
+    </div>
+</EditForm>
+
+@code {
+    [Parameter] public Employee employee { get; set; }
+    [Parameter] public EventCallback EventCallback { get; set; }
+}

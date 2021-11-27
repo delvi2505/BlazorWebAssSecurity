@@ -1,0 +1,14 @@
+﻿@attribute [Authorize(Roles = "USUARIOMAESTRO,ADMINISTRADOR")]
+
+<AuthorizeView Roles="USUARIOMAESTRO,ADMINISTRADOR">
+    <div class="row" style="overflow-y: auto; max-height: 650px;">
+        <UserInfo employee="employee" />
+    </div>
+    <hr />
+    <button @onclick="ModalInstance.CancelAsync" class="btn btn-secondary">Cerrar</button>
+</AuthorizeView>
+
+@code {
+    [CascadingParameter] BlazoredModalInstance ModalInstance { get; set; }
+    [Parameter] public Employee employee { get; set; }
+}

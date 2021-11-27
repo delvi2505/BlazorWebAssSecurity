@@ -1,0 +1,36 @@
+﻿@attribute [Authorize(Roles = "USUARIOMAESTRO,ADMINISTRADOR")]
+@page "/RegistroUsuario"
+@inject HttpClient http
+@inject NavigationManager uriHelper
+
+<h3>Registro de usuario</h3>
+<AuthorizeView Roles="USUARIOMAESTRO,ADMINISTRADOR">
+    <UserEditForm employee="employee" EventCallback="CreateUser" />
+</AuthorizeView>
+
+
+@code {
+    Employee employee { get; set; } = new Employee() { Status = "ACTIVO" };
+    [CascadingParameter] public IModalService Modal { get; set; }
+
+    private async Task CreateUser()
+    {
+        var modal = Modal.Show<ModalWait>("", SharedModalOptions.modalOptionsWait);
+        var result = await http.PostAsJsonAsync<Employee>("api/Account/CreateUser", employee);
+        switch (result.StatusCode)
+        {
+            case System.Net.HttpStatusCode.OK:
+                uriHelper.NavigateTo("/Usuarios");
+                break;
+            case System.Net.HttpStatusCode.Unauthorized:
+                uriHelper.NavigateTo("/Logout");
+                break;
+            default:
+                modal.Close();
+                Modal.Show<ModalInfo>("Error", SharedModalOptions.SetParameterModalInfo(result.Content.ReadAsStringAsync().Result, "alert alert-danger"), SharedModalOptions.modalOptionsInfo);
+                break;
+        }
+    }
+
+
+}

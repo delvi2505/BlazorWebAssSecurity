@@ -1,0 +1,108 @@
+﻿@page "/Usuarios"
+@attribute [Authorize(Roles = "USUARIOMAESTRO,ADMINISTRADOR")]
+@inject HttpClient http
+@inject NavigationManager uriHelper
+
+<AuthorizeView Roles="USUARIOMAESTRO,ADMINISTRADOR">
+    <div class="row">
+        <h3>Lista Usuarios | </h3>
+        <a href="RegistroUsuario" class="btn btn-primary">
+            <span class="oi oi-plus" aria-hidden="true"></span> Crear Nuevo Registro
+        </a>
+    </div>
+
+    <ListComponent OnClickEvent="GetRegisters" Response="response">
+        <SelectOptions>
+            <option value="">Estatus...</option>
+            <option value="ACTIVO">ACTIVOS</option>
+            <option value="SUSPENDIDO">SUSPENDIDOS</option>
+        </SelectOptions>
+        <TableHeader>
+            <th>Nombre Completo</th>
+            <th>DNI</th>
+            <th>Télefono</th>
+            <th>Rol</th>
+            <th></th>
+        </TableHeader>
+        <TableBody>
+            @foreach (Employee employee in employees)
+            {
+                <tr>
+                    <td @onclick="@(()=> ShowDetails(employee))" style="cursor: pointer; color: blue; " >@employee.Names @employee.LastNames</td>
+                    <td>@employee.DNI</td>
+                    <td>@employee.Phone</td>
+                    <td>@employee.Rol</td>
+                    <td>
+                        <a href="/ActualizarUsuario/@employee.Id" class="btn btn-warning" title="Editar">
+                            <span class="oi oi-pencil" aria-hidden="true"></span>
+                        </a> |
+                        <a href="/EliminarUsuario/@employee.Id" class="btn btn-danger" title="Eliminar">
+                            <span class="oi oi-trash" aria-hidden="true"></span>
+                        </a>
+                    </td>
+                </tr>
+            }
+        </TableBody>
+    </ListComponent>
+</AuthorizeView>
+
+
+@code {
+
+    [CascadingParameter] public IModalService Modal { get; set; }
+
+    ResponseForList response = new ResponseForList() { AllRegisters = 0 };
+    private IList<Employee> employees;
+
+    protected override Task OnInitializedAsync()
+    {
+
+        GetRegisters("", "", 1, DateTime.UtcNow, DateTime.UtcNow);
+        return base.OnInitializedAsync();
+    }
+
+    private async void GetRegisters(string search, string status, int pageLocal, DateTime startDate, DateTime endDate)
+    {
+        if (search == "")
+            search = "TODO";
+        if (status == "")
+            status = "TODO";
+
+        var modal = Modal.Show<ModalWait>("", SharedModalOptions.modalOptionsWait);
+        var result = await  http.GetAsync($"api/Account/GetUsers/{search}/{status}/{pageLocal}");
+        switch (result.StatusCode)
+        {
+            case System.Net.HttpStatusCode.OK:
+                response = JsonSerializer.Deserialize<ResponseForList>(result.Content.ReadAsStringAsync().Result);
+                employees = JsonSerializer.Deserialize<IList<Employee>>(response.EntitiesPricipal);
+                modal.Close();
+                break;
+            case System.Net.HttpStatusCode.NotFound:
+                response = new ResponseForList() { AllRegisters = 0 };
+                modal.Close();
+                break;
+            case System.Net.HttpStatusCode.Unauthorized:
+                uriHelper.NavigateTo("/Logout");
+                break;
+            default:
+                modal.Close();
+                Modal.Show<ModalInfo>("Error", SharedModalOptions.SetParameterModalInfo(result.Content.ReadAsStringAsync().Result, "alert alert-danger"), SharedModalOptions.modalOptionsInfo);
+                break;
+        }
+        StateHasChanged();
+    }
+
+    private void ShowDetails(Employee employee)
+    {
+        var modalOptions = new ModalOptions()
+        {
+            Animation = ModalAnimation.FadeInOut(0.5)
+        };
+
+        var parameters = new ModalParameters();
+        parameters.Add(nameof(DetailsEmployee.employee), employee);
+
+        Modal.Show<DetailsEmployee>("Detalle Usuario", parameters, modalOptions);
+    }
+
+}

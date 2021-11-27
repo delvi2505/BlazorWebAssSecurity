@@ -1,0 +1,102 @@
+﻿@attribute [Authorize(Roles = "USUARIOMAESTRO,ADMINISTRADOR")]
+@page "/ActualizarUsuario/{Id:int}"
+@inject HttpClient http
+@inject NavigationManager uriHelper
+
+<h3>Actualizar usuario</h3>
+<AuthorizeView Roles="USUARIOMAESTRO,ADMINISTRADOR">
+    <div class="arrow text-right">
+        <a class="btn btn-warning" @onclick="ResetPass">
+            <span class="oi oi-key"></span> Resetear Contraseña
+        </a>
+    </div>
+    <UserEditForm employee="employee" EventCallback="SaveUser" />
+    @if(context.User.Claims.First(x => x.Type == "employeeId").Value == employee.Id.ToString())
+    {
+        logout = true;
+    }
+</AuthorizeView>
+
+
+@code {
+    [CascadingParameter] public IModalService Modal { get; set; }
+    [Parameter] public int Id { get; set; }
+    Employee employee { get; set; } = new Employee();
+
+    private bool logout = false;
+
+    protected async override Task OnParametersSetAsync()
+    {
+        var modal = Modal.Show<ModalWait>("", SharedModalOptions.modalOptionsWait);
+
+        var result = await http.GetAsync($"api/Account/GetUserById/{Id}");
+        switch (result.StatusCode)
+        {
+            case System.Net.HttpStatusCode.OK:
+                employee = JsonSerializer.Deserialize<Employee>(result.Content.ReadAsStringAsync().Result);
+                modal.Close();
+                break;
+            case System.Net.HttpStatusCode.Unauthorized:
+                uriHelper.NavigateTo("/Logout");
+                break;
+            default:
+                modal.Close();
+                Modal.Show<ModalInfo>("Error", SharedModalOptions.SetParameterModalInfo(result.Content.ReadAsStringAsync().Result, "alert alert-danger"), SharedModalOptions.modalOptionsInfo);
+                break;
+        }
+    }
+
+    private async Task ResetPass()
+    {
+        var modal = Modal.Show<ModalWait>("", SharedModalOptions.modalOptionsWait);
+        var result = await http.PutAsJsonAsync<int>("api/Account/ResetPassword", employee.Id);
+        switch (result.StatusCode)
+        {
+            case System.Net.HttpStatusCode.OK:
+                if (logout)
+                {
+                    uriHelper.NavigateTo("/Logout");
+                }
+                else
+                {
+                    modal.Close();
+                    Modal.Show<ModalInfo>("Operación Exitosa", SharedModalOptions.SetParameterModalInfo(Utilities.MSGSUCCESS, "alert alert-success"), SharedModalOptions.modalOptionsInfo);
+                }
+                break;
+            case System.Net.HttpStatusCode.Unauthorized:
+                uriHelper.NavigateTo("/Logout");
+                break;
+            default:
+                modal.Close();
+                Modal.Show<ModalInfo>("Error", SharedModalOptions.SetParameterModalInfo(result.Content.ReadAsStringAsync().Result, "alert alert-danger"), SharedModalOptions.modalOptionsInfo);
+                break;
+        }
+    }
+
+    private async Task SaveUser()
+    {
+        var modal = Modal.Show<ModalWait>("", SharedModalOptions.modalOptionsWait);
+        var result = await http.PutAsJsonAsync<Employee>("api/Account/SaveUser", employee);
+        switch (result.StatusCode)
+        {
+            case System.Net.HttpStatusCode.OK:
+                if (logout)
+                {
+                    uriHelper.NavigateTo("/Logout");
+                }
+                else
+                {
+                    uriHelper.NavigateTo("/Usuarios");
+                }
+                break;
+            case System.Net.HttpStatusCode.Unauthorized:
+                uriHelper.NavigateTo("/Logout");
+                break;
+            default:
+                modal.Close();
+                Modal.Show<ModalInfo>("Error", SharedModalOptions.SetParameterModalInfo(result.Content.ReadAsStringAsync().Result, "alert alert-danger"), SharedModalOptions.modalOptionsInfo);
+                break;
+        }
+    }
+
+}

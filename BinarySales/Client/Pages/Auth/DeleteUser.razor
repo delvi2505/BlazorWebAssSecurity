@@ -1,0 +1,81 @@
+﻿@attribute [Authorize(Roles = "USUARIOMAESTRO,ADMINISTRADOR")]
+@page "/EliminarUsuario/{Id:int}"
+@inject HttpClient http
+@inject NavigationManager uriHelper
+
+<h3>Eliminar Usuario</h3>
+<AuthorizeView Roles="USUARIOMAESTRO,ADMINISTRADOR">
+    <h5 class="alert alert-danger">¿Está seguro de eliminar este usuario?</h5>
+
+    <div class="row" style="overflow-y: auto; max-height: 700px;">
+        <UserInfo employee="employee" />
+    </div>
+    <hr />
+    <a class="btn btn-info" href="Usuarios">
+        <span class="oi oi-arrow-left"></span> NO, Volver
+    </a> |
+    <button @onclick="@(()=>DeleteThisUser())" class="btn btn-danger">
+        <span class="oi oi-trash"></span> SI, Eliminar
+    </button>
+    @if (context.User.Claims.First(x => x.Type == "employeeId").Value == employee.Id.ToString())
+    {
+        logout = true;
+    }
+</AuthorizeView>
+
+@code {
+
+    [CascadingParameter] public IModalService Modal { get; set; }
+    [Parameter] public int Id { get; set; }
+    Employee employee { get; set; } = new Employee();
+
+    private bool logout = false;
+
+    protected async override Task OnParametersSetAsync()
+    {
+        var modal = Modal.Show<ModalWait>("", SharedModalOptions.modalOptionsWait);
+
+        var result = await http.GetAsync($"api/Account/GetUserById/{Id}");
+        switch (result.StatusCode)
+        {
+            case System.Net.HttpStatusCode.OK:
+                employee = JsonSerializer.Deserialize<Employee>(result.Content.ReadAsStringAsync().Result);
+                modal.Close();
+                break;
+            case System.Net.HttpStatusCode.Unauthorized:
+                uriHelper.NavigateTo("/Logout");
+                break;
+            default:
+                modal.Close();
+                Modal.Show<ModalInfo>("Error", SharedModalOptions.SetParameterModalInfo(result.Content.ReadAsStringAsync().Result, "alert alert-danger"), SharedModalOptions.modalOptionsInfo);
+                break;
+        }
+    }
+
+    private async Task DeleteThisUser()
+    {
+        var modal = Modal.Show<ModalWait>("", SharedModalOptions.modalOptionsWait);
+        var result = await http.DeleteAsync($"api/Account/DeleteUser/{Id}");
+        switch (result.StatusCode)
+        {
+            case System.Net.HttpStatusCode.OK:
+                if (logout)
+                {
+                    uriHelper.NavigateTo("/Logout");
+                }
+                else
+                {
+                    uriHelper.NavigateTo("/Usuarios");
+                }
+                break;
+            case System.Net.HttpStatusCode.Unauthorized:
+                uriHelper.NavigateTo("/Logout");
+                break;
+            default:
+                modal.Close();
+                Modal.Show<ModalInfo>("Error", SharedModalOptions.SetParameterModalInfo(result.Content.ReadAsStringAsync().Result, "alert alert-danger"), SharedModalOptions.modalOptionsInfo);
+                break;
+        }
+    }
+
+}

@@ -1,0 +1,29 @@
+﻿@inherits LayoutComponentBase
+
+<div class="page" style="background-color: #e9ecef; ">
+    <AuthorizeView>
+        <Authorized>
+            <div class="sidebar" style="background-image: linear-gradient(to right, #28a745 0%, #17a2b8 100%) !important;">
+                <NavMenu />
+            </div>
+        </Authorized>
+    </AuthorizeView>
+
+    <div class="main">
+        <AuthorizeView>
+            <Authorized>
+                <div class="top-row px-4" style="background-color: #17a2b8 !important; color:white;">
+                    <h6><a href="/CambiarPassword" style="color:white;">@context.User.Claims.First(c => c.Type == System.Security.Claims.ClaimTypes.Name).Value</a></h6>
+                    <a href="Logout" class="ml-md-auto btn btn-danger">
+                        Salir <span class="oi oi-arrow-right"></span>
+                    </a>
+                </div>
+            </Authorized>
+        </AuthorizeView>
+
+        <div class="content px-4">
+            @Body
+        </div>
+    </div>
+</div>
+

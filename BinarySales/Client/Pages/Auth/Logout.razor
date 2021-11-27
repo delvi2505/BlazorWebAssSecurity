@@ -1,0 +1,14 @@
+﻿@page "/Logout"
+@inject NavigationManager uriHelper
+@inject BinarySales.Client.Auth.ILoginServices loginService
+
+<p>Saliendo....</p>
+
+@code {
+
+    protected async override Task OnInitializedAsync()
+    {
+        await loginService.Logout();
+        uriHelper.NavigateTo("");
+    }
+}

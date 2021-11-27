@@ -1,0 +1,60 @@
+﻿@page "/Login"
+@inject HttpClient http
+@inject NavigationManager uriHelper
+@inject BinarySales.Client.Auth.ILoginServices loginService
+@inject IModalService ModalService
+
+<div class="row" style="margin-top: 30px;">
+    <div class="col-md-3 col-sm-12" style="background-image: linear-gradient(to right, #28a745 0%, #17a2b8 100%); border-radius: 5px; color: white; padding: 20px; margin: 0 auto auto auto;">
+        <img src="/Images/logo.png" class="rounded-circle img-fluid" alt="200" />
+        <h3>Iniciar Sesión</h3>
+        <EditForm Model="@userInfo" OnValidSubmit="Loger">
+            <DataAnnotationsValidator />
+
+            <div class="form-group">
+                <label>Usuario</label>
+                <div>
+                    <InputText Class="form-control" @bind-Value="userInfo.UserName" />
+                    <ValidationMessage For="@(()=> userInfo.UserName)" />
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Password</label>
+                <div>
+                    <InputPassword Class="form-control" @bind-Value="userInfo.Password" />
+                    <ValidationMessage For="@(()=> userInfo.Password)" />
+                </div>
+            </div>
+            <div class="col-12" style="text-align:center;">
+                <button type="submit" class="btn btn-primary">Acceder</button>
+            </div>
+        </EditForm>
+    </div>
+</div>
+
+
+
+@code {
+    [CascadingParameter] public IModalService Modal { get; set; }
+
+    private UserLogin userInfo = new UserLogin();
+
+    private async Task Loger()
+    {
+        var modal = Modal.Show<ModalWait>("", SharedModalOptions.modalOptionsWait);
+        var result = await http.PostAsJsonAsync<UserLogin>("api/Account/Login", userInfo);
+        if (result.IsSuccessStatusCode)
+        {
+            await loginService.Login(result.Content.ReadAsStringAsync().Result);
+            uriHelper.NavigateTo("");
+        }
+        else
+        {
+            modal.Close();
+            Modal.Show<ModalInfo>("Error", SharedModalOptions.SetParameterModalInfo(result.Content.ReadAsStringAsync().Result, "alert alert-danger"), SharedModalOptions.modalOptionsInfo);
+        }
+
+    }
+
+}
