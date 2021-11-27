@@ -13,7 +13,7 @@ namespace BinarySales.Shared
         public const int REGISTERSPERPAGE = 100; //Debe ser un valor igual o mayor que RADIO para que no hayan problemas de cálculo
         public const int RADIO = 2;
 
-        public static System.Globalization.CultureInfo cultureForNumbers = System.Globalization.CultureInfo.InvariantCulture;
+        //public static System.Globalization.CultureInfo cultureForNumbers = System.Globalization.CultureInfo.InvariantCulture;
 
         public const string MSGREQUIRED = "El Campo {0} es requerido";
         public const string MSGCREDENTIALSFAILS = "Las credenciales de acceso no son correctas";
